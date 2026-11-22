@@ -1,0 +1,14 @@
+# Тяжёлое окружение ~/ocr-env2 (Python 3.12, Apple Silicon). Проверено 15.10.2026 на Mac mini M4 Pro.
+# Установка: python3.12 -m venv ~/ocr-env2 && ~/ocr-env2/bin/pip install -r requirements-ocr.txt
+# Точные версии, с которыми всё проверено, — requirements-ocr.lock.txt (ставить из него; этот файл — что нужно и зачем).
+# Модели: HF_HUB_DISABLE_XET=1 ~/ocr-env2/bin/hf download mlx-community/dots.mocr-8bit
+#         HF_HUB_DISABLE_XET=1 ~/ocr-env2/bin/hf download mlx-community/GLM-OCR-bf16   (второе мнение, 1,9 ГБ; без неё скилл работает)
+#         Xiaomi-OCR-0 (второе мнение № 1): hf download SeerRay-Lab/Xiaomi-OCR-0 и конвертация в ~/models/Xiaomi-OCR-0-mlx-8bit, см. УСТАНОВКА.md
+#         HunyuanOCR-1.5 (запасной движок через llama.cpp, необязательно): brew install llama.cpp и два GGUF в ~/models/HunyuanOCR-1.5-gguf, см. УСТАНОВКА.md
+mlx-vlm==0.7.8
+pymupdf>=1.27
+pillow>=11
+huggingface_hub>=1.12
+pyobjc-framework-Vision>=12
+pyobjc-framework-Quartz>=12
+pyobjc-framework-Cocoa>=12   # AppKit: орфографический фильтр проверки полноты (coverage.py); ставится и сам, зависимость Quartz/Vision
