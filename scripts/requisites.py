@@ -263,6 +263,8 @@ _AMT_AFTER = re.compile(
 _AMT_BEFORE = re.compile(
     r"\(\s*(?P<num>\d{1,3}(?:[ \u00a0\u202f]\d{3})+|\d+)(?P<frac>[.,]\d+)?\s*(?:руб[а-я]*\.?|₽|р\.)?\s*\)")
 _SCALE_UNIT = {"тыс": 10 ** 3, "млн": 10 ** 6, "млрд": 10 ** 9}
+# копейки цифрами в конце прописи: «(… рублей 70 копеек)», «(… руб. 07 коп.)»
+_KOP_DIGITS = re.compile(r"(?<=руб)[а-яё]*\.?\s*(?P<kop>\d{1,2})\s*коп[а-яё]*\.?\s*$")
 
 
 def _fmt(n: int) -> str:
@@ -274,6 +276,11 @@ def check_amounts(line: str):
     out = []
     for m in _AMT_AFTER.finditer(line):
         words = m.group("words")
+        kop_d = None
+        km = _KOP_DIGITS.search(_norm(words))   # _norm не меняет длину строки
+        if km:
+            kop_d = int(km.group("kop"))
+            words = words[:km.start("kop")]      # «… рублей» — без копеек цифрами
         if re.search(r"\d", re.sub(r"\d+\s*/\s*\d+", "", words)):
             continue   # в скобках что-то кроме числительных
         digits = int(re.sub(r"\D", "", m.group("num")))
@@ -309,6 +316,8 @@ def check_amounts(line: str):
                 out.append((shown, f"дробная часть цифрами {m.group('frac')}, прописью {frac_w}"))
         elif kop_w is not None and frac and val == cands[0] and int((frac + "0")[:2]) != kop_w:
             out.append((shown, f"копейки цифрами {frac}, прописью {kop_w}"))
+        elif kop_d is not None and val == cands[0] and (int((frac + "0")[:2]) if frac else 0) != kop_d:
+            out.append((shown, f"копейки в сумме {frac or '00'}, в скобках {kop_d:02d}"))
     for m in _AMT_BEFORE.finditer(line):
         toks = [(t.group(), t.start()) for t in re.finditer(r"[а-яё]+", _norm(line[:m.start()]))][-14:]
         take, started, first = [], False, m.start()
